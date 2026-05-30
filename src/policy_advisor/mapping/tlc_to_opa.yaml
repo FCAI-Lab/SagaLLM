@@ -1,0 +1,146 @@
+# tlc_to_opa.yaml — TLC Invariant → Rego Fix Mapping
+# ====================================================
+# Schema consumed by MappingLoader (mapping/loader.py).
+#
+# Top-level sections:
+#   invariants   — per-invariant fix rules and decision logic
+#   tlc_patterns — regex patterns for parsing TLC counterexample output
+#   rego_fields  — metadata about Rego policy fields
+#   tla_model    — which TLA+ module and invariants TLC checks
+
+# ── Invariant fix rules ───────────────────────────────────────────────────────
+
+invariants:
+
+  DataIsolation:
+    opa_fixable: true
+    fix_target: "Rego"
+    action_on_violation: >
+      sensitive_data appeared in an agent's promptContext.
+      Determine whether the leaking edge is in E (execution_edges) and whether
+      P_tran is missing a block (p_tran_fix) or P_cont is missing a keyword (p_cont_fix).
+    fix_decision:
+      # bad_sender IS a declared upstream of receiver → path policy missing, fix P_tran
+      in_E_true:
+        fix_type: p_tran_fix
+      # bad_sender is NOT in declared edges → keyword escaped content filter, fix P_cont
+      in_E_false:
+        fix_type: p_cont_fix
+      # Cannot determine sender from counterexample → default to P_tran (safer)
+      bad_sender_unknown:
+        fix_type: p_tran_fix
+    fixes:
+      p_tran_fix:
+        rego_field: allowed_transfers
+        action: remove_receiver
+        description: >
+          Remove the (bad_sender → receiver) entry from allowed_transfers
+          so that edge is no longer in P, making D_actual = E ∩ P block it.
+      p_cont_fix:
+        rego_field: sensitive_keywords
+        action: add_keyword
+        description: >
+          Add the escaped keyword to sensitive_keywords so P_cont
+          redacts it before it reaches any receiver's promptContext.
+
+  ContentDataIsolation:
+    opa_fixable: true
+    fix_target: "Rego"
+    action_on_violation: >
+      A sensitive keyword appeared in an agent's promptContext.
+      The keyword is not in sensitive_keywords so P_cont did not redact it.
+    fix_decision:
+      in_E_true:
+        fix_type: p_cont_fix
+      in_E_false:
+        fix_type: p_cont_fix
+      bad_sender_unknown:
+        fix_type: p_cont_fix
+    fixes:
+      p_cont_fix:
+        rego_field: sensitive_keywords
+        action: add_keyword
+        description: >
+          Add the escaped keyword to sensitive_keywords in the Rego policy.
+
+  AtomicTermination:
+    opa_fixable: false
+    fix_target: "pipeline.yaml"
+    action_on_violation: >
+      Not all agents reach a terminal state (all-done or all-compensated).
+      Check execution_edges for agents with unsatisfiable preconditions.
+      Requires manual review.
+
+  CompensationCompleteness:
+    opa_fixable: false
+    fix_target: "agent.rollback()"
+    action_on_violation: >
+      After a failure, some agents never reach compensated state.
+      Rollback chain is incomplete — ensure every agent that reaches "done"
+      has a reachable compensation path. Requires manual review.
+
+  ExecutionOrderPreserved:
+    opa_fixable: false
+    fix_target: "pipeline.yaml"
+    action_on_violation: >
+      Execution order does not respect declared dependency edges.
+      Possible cycle in execution_edges. Run topological sort check first.
+      Requires manual review.
+
+  Deadlock:
+    opa_fixable: false
+    fix_target: "pipeline.yaml"
+    action_on_violation: >
+      TLC found a deadlock state where no further transitions are possible.
+      An agent has preconditions that can never be satisfied.
+      Check execution_edges for missing or circular dependencies.
+
+# ── TLC counterexample regex patterns ────────────────────────────────────────
+# Used by verifier.py to extract which agent and keyword caused a violation.
+
+tlc_patterns:
+  # Matches an agent whose promptContext contains at least one keyword.
+  # Capture group: agent name
+  receiver:
+    regex: 'promptContext\s*=\s*\[[^\]]*"([^"]+)"\s*\|->\s*\{[^}]*"[^"]+"[^}]*\}'
+    captures:
+      - agent_name
+
+  # Matches the state where a sensitive agent completed (agentOutput set)
+  # Capture group: sensitive agent name
+  sensitive_agent_done:
+    regex: 'agentOutput\s*=\s*\[[^\]]*"([^"]+)"\s*\|->\s*\{[^}]*"[^"]+"[^}]*\}'
+    captures:
+      - agent_name
+
+# ── Rego field metadata ───────────────────────────────────────────────────────
+
+rego_fields:
+  allowed_transfers:
+    layer: P_tran
+    type: dict_of_sets
+    automatable: true
+    description: "Authorized (sender, receiver) path pairs"
+
+  sensitive_keywords:
+    layer: P_cont
+    type: set
+    automatable: true
+    description: "Keywords that trigger line-level redaction"
+
+  agent_keyword_permissions:
+    layer: P_cont
+    type: dict_of_sets
+    automatable: true
+    description: "Per-receiver keyword allowlist (least privilege)"
+
+# ── TLA+ model configuration ──────────────────────────────────────────────────
+
+tla_model:
+  spec_module: "sagallm_content_logic"
+  checked_invariants:
+    - DataIsolation
+    - ContentDataIsolation
+  checked_properties:
+    - AtomicTermination
+    - CompensationCompleteness

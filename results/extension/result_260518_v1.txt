@@ -1,0 +1,296 @@
+
+======================================================================
+  Compare context 
+======================================================================
+
+──────────────────────────────────────────────────────────────────────
+  Agent: Order Setup Agent
+──────────────────────────────────────────────────────────────────────
+
+  [ WITHOUT OPA ]  No dependency(Initial Agent) 
+
+  [ WITH OPA ] 
+     
+
+    → Allowed Transfer 
+
+──────────────────────────────────────────────────────────────────────
+  Agent: Task Setup Agent
+──────────────────────────────────────────────────────────────────────
+
+  [ WITHOUT OPA ]  context that would have been received (based on >> declarations)
+    from Order Setup Agent:   ✅ RECEIVED
+      Task ID: TASK-7821  
+      Audit ID: AUDIT-2024-001  
+      Compliance Key: COMP-KEY-XYZ  
+      Auditor Signature: SIG-INTERNAL-99  
+      Destination: Warehouse Zone B, Slot 14  
+      Payload: 3x Industrial Sensor, 1x Control Unit
+
+  [ WITH OPA ] 
+      [From Order Setup Agent]:
+      Task ID: TASK-7821  
+      [Censored]
+      [Censored]
+      [Censored]
+      Destination: Warehouse Zone B, Slot 14  
+      Payload: 3x Industrial Sensor, 1x Control Unit
+
+    → Allowed Transfer 
+
+──────────────────────────────────────────────────────────────────────
+  Agent: Constraint Validation Agent
+──────────────────────────────────────────────────────────────────────
+
+  [ WITHOUT OPA ]  context that would have been received (based on >> declarations)
+    from Order Setup Agent:   ✅ RECEIVED
+      Task ID: TASK-7821  
+      Audit ID: AUDIT-2024-001  
+      Compliance Key: COMP-KEY-XYZ  
+      Auditor Signature: SIG-INTERNAL-99  
+      Destination: Warehouse Zone B, Slot 14  
+      Payload: 3x Industrial Sensor, 1x Control Unit
+    from Task Setup Agent:   ✅ RECEIVED
+      ```
+      Robot Task Sequence for TASK-7821:
+      
+      1. **Initialize Task**
+         - Action: Power on and initialize systems
+         - Estimated Duration: 1 minute
+      
+      2. **Navigate to Loading Area**
+         - Waypoint: Start Position
+         - Action: Move to Loading Area
+         - Estimated Duration: 2 minutes
+      
+      3. **Load Payload**
+         - Action: Securely load 3x Industrial Sensor and 1x Control Unit onto the robot
+         - Estimated Duration: 3 minutes
+      
+      4. **Navigate to Destination**
+         - Waypoint: Loading Area
+         - Action: Move to Warehouse Zone B
+         - Estimated Duration: 5 minutes
+      
+      5. **Locate Slot**
+         - Waypoint: Warehouse Zone B
+         - Action: Identify and confirm Slot 14 location
+         - Estimated Duration: 2 minutes
+      
+      6. **Unload Payload**
+         - Waypoint: Slot 14
+         - Action: Unload 3x Industrial Sensor and 1x Control Unit
+         - Estimated Duration: 3 minutes
+      
+      7. **Return to Base**
+         - Waypoint: Slot 14
+         - Action: Return to Start Position
+         - Estimated Duration: 5 minutes
+      
+      8. **Shutdown Systems**
+         - Action: Power down and secure systems
+         - Estimated Duration: 1 minute
+      
+      **Total Estimated Duration: 22 minutes**
+      ```
+
+  [ WITH OPA ] 
+      [From Order Setup Agent]:
+      Task ID: TASK-7821  
+      Audit ID: AUDIT-2024-001  
+      Compliance Key: COMP-KEY-XYZ  
+      Auditor Signature: SIG-INTERNAL-99  
+      Destination: Warehouse Zone B, Slot 14  
+      Payload: 3x Industrial Sensor, 1x Control Unit  
+      
+      [From Task Setup Agent]:
+      ```
+      Robot Task Sequence for TASK-7821:
+      
+      1. **Initialize Task**
+         - Action: Power on and initialize systems
+         - Estimated Duration: 1 minute
+      
+      2. **Navigate to Loading Area**
+         - Waypoint: Start Position
+         - Action: Move to Loading Area
+         - Estimated Duration: 2 minutes
+      
+      3. **Load Payload**
+         - Action: Securely load 3x Industrial Sensor and 1x Control Unit onto the robot
+         - Estimated Duration: 3 minutes
+      
+      4. **Navigate to Destination**
+         - Waypoint: Loading Area
+         - Action: Move to Warehouse Zone B
+         - Estimated Duration: 5 minutes
+      
+      5. **Locate Slot**
+         - Waypoint: Warehouse Zone B
+         - Action: Identify and confirm Slot 14 location
+         - Estimated Duration: 2 minutes
+      
+      6. **Unload Payload**
+         - Waypoint: Slot 14
+         - Action: Unload 3x Industrial Sensor and 1x Control Unit
+         - Estimated Duration: 3 minutes
+      
+      7. **Return to Base**
+         - Waypoint: Slot 14
+         - Action: Return to Start Position
+         - Estimated Duration: 5 minutes
+      
+      8. **Shutdown Systems**
+         - Action: Power down and secure systems
+         - Estimated Duration: 1 minute
+      
+      **Total Estimated Duration: 22 minutes**
+      ```
+
+    → Allowed Transfer 
+
+──────────────────────────────────────────────────────────────────────
+  Agent: Plan Oversight Agent
+──────────────────────────────────────────────────────────────────────
+
+  [ WITHOUT OPA ]  context that would have been received (based on >> declarations)
+    from Order Setup Agent:   ✅ RECEIVED
+      Task ID: TASK-7821  
+      Audit ID: AUDIT-2024-001  
+      Compliance Key: COMP-KEY-XYZ  
+      Auditor Signature: SIG-INTERNAL-99  
+      Destination: Warehouse Zone B, Slot 14  
+      Payload: 3x Industrial Sensor, 1x Control Unit
+    from Task Setup Agent:   ✅ RECEIVED
+      ```
+      Robot Task Sequence for TASK-7821:
+      
+      1. **Initialize Task**
+         - Action: Power on and initialize systems
+         - Estimated Duration: 1 minute
+      
+      2. **Navigate to Loading Area**
+         - Waypoint: Start Position
+         - Action: Move to Loading Area
+         - Estimated Duration: 2 minutes
+      
+      3. **Load Payload**
+         - Action: Securely load 3x Industrial Sensor and 1x Control Unit onto the robot
+         - Estimated Duration: 3 minutes
+      
+      4. **Navigate to Destination**
+         - Waypoint: Loading Area
+         - Action: Move to Warehouse Zone B
+         - Estimated Duration: 5 minutes
+      
+      5. **Locate Slot**
+         - Waypoint: Warehouse Zone B
+         - Action: Identify and confirm Slot 14 location
+         - Estimated Duration: 2 minutes
+      
+      6. **Unload Payload**
+         - Waypoint: Slot 14
+         - Action: Unload 3x Industrial Sensor and 1x Control Unit
+         - Estimated Duration: 3 minutes
+      
+      7. **Return to Base**
+         - Waypoint: Slot 14
+         - Action: Return to Start Position
+         - Estimated Duration: 5 minutes
+      
+      8. **Shutdown Systems**
+         - Action: Power down and secure systems
+         - Estimated Duration: 1 minute
+      
+      **Total Estimated Duration: 22 minutes**
+      ```
+    from Constraint Validation Agent:   ✅ RECEIVED
+      <validation_report>
+      1. **Payload Limits**: PASS
+         - The payload consists of 3x Industrial Sensor and 1x Control Unit. Assuming standard industrial sensors and control units, this is within typical payload limits for warehouse robots. No specific payload weight or size constraints were exceeded based on provided information.
+      
+      2. **Restricted Zones**: PASS
+         - The task sequence involves movement from the Start Position to Warehouse Zone B, Slot 14, and back. There is no indication that these areas are restricted zones. Ensure that Warehouse Zone B is not flagged as restricted in the latest compliance database.
+      
+      3. **Audit Requirements**: PASS
+         - The task includes an Audit ID (AUDIT-2024-001) and a Compliance Key (COMP-KEY-XYZ) with an Auditor Signature (SIG-INTERNAL-99). These details satisfy the audit trail requirements, assuming the signature and compliance key are valid and current.
+      
+      <notes>
+      - Ensure that the robot's navigation systems are updated with the latest map data to avoid any potential restricted zones not mentioned in the task context.
+      - Confirm that the payload does not exceed any specific weight or size restrictions that may apply to the robot model used.
+      - Verify that the Compliance Key and Auditor Signature are valid and authorized for the current operational period.
+      </notes>
+      </validation_report>
+
+  [ WITH OPA ] 
+      [From Order Setup Agent]:
+      Task ID: TASK-7821  
+      Audit ID: AUDIT-2024-001  
+      [Censored]
+      [Censored]
+      Destination: Warehouse Zone B, Slot 14  
+      Payload: 3x Industrial Sensor, 1x Control Unit  
+      
+      [From Task Setup Agent]:
+      ```
+      Robot Task Sequence for TASK-7821:
+      
+      1. **Initialize Task**
+         - Action: Power on and initialize systems
+         - Estimated Duration: 1 minute
+      
+      2. **Navigate to Loading Area**
+         - Waypoint: Start Position
+         - Action: Move to Loading Area
+         - Estimated Duration: 2 minutes
+      
+      3. **Load Payload**
+         - Action: Securely load 3x Industrial Sensor and 1x Control Unit onto the robot
+         - Estimated Duration: 3 minutes
+      
+      4. **Navigate to Destination**
+         - Waypoint: Loading Area
+         - Action: Move to Warehouse Zone B
+         - Estimated Duration: 5 minutes
+      
+      5. **Locate Slot**
+         - Waypoint: Warehouse Zone B
+         - Action: Identify and confirm Slot 14 location
+         - Estimated Duration: 2 minutes
+      
+      6. **Unload Payload**
+         - Waypoint: Slot 14
+         - Action: Unload 3x Industrial Sensor and 1x Control Unit
+         - Estimated Duration: 3 minutes
+      
+      7. **Return to Base**
+         - Waypoint: Slot 14
+         - Action: Return to Start Position
+         - Estimated Duration: 5 minutes
+      
+      8. **Shutdown Systems**
+         - Action: Power down and secure systems
+         - Estimated Duration: 1 minute
+      
+      **Total Estimated Duration: 22 minutes**
+      ```
+      
+      [From Constraint Validation Agent]:
+      <validation_report>
+      1. **Payload Limits**: PASS
+         - The payload consists of 3x Industrial Sensor and 1x Control Unit. Assuming standard industrial sensors and control units, this is within typical payload limits for warehouse robots. No specific payload weight or size constraints were exceeded based on provided information.
+      
+      2. **Restricted Zones**: PASS
+         - The task sequence involves movement from the Start Position to Warehouse Zone B, Slot 14, and back. There is no indication that these areas are restricted zones. Ensure that Warehouse Zone B is not flagged as restricted in the latest compliance database.
+      
+      3. **Audit Requirements**: PASS
+      [Censored]
+      
+      <notes>
+      - Ensure that the robot's navigation systems are updated with the latest map data to avoid any potential restricted zones not mentioned in the task context.
+      - Confirm that the payload does not exceed any specific weight or size restrictions that may apply to the robot model used.
+      [Censored]
+      </notes>
+      </validation_report>
+
+    → Allowed Transfer 

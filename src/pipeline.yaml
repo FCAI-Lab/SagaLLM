@@ -1,0 +1,77 @@
+# pipeline.yaml — SafeSagaLLM Policy Advisor Input
+# ==================================================
+# User-facing configuration file. Defines the multi-agent pipeline topology
+# and the desired access control policy. run_advisor.py reads this file,
+# generates Rego + TLA+ specs, runs TLC, and auto-patches until verified.
+
+# ── Agent definitions ─────────────────────────────────────────────────────────
+agents:
+  - name: "Order Setup Agent"
+    sensitive: true          # produces sensitive_data (e.g. audit_id, compliance_key)
+  - name: "Task Setup Agent"
+    sensitive: false
+  - name: "Constraint Validation Agent"
+    sensitive: false
+  - name: "Plan Oversight Agent"
+    sensitive: false
+
+# ── Execution graph E (structural dependency edges) ───────────────────────────
+# These declare which agent depends on which, NOT what data is allowed to flow.
+# D_actual = E ∩ P (only" edges in both E and P_tran actually transfer data).
+execution_edges:
+  - ["Order Setup Agent", "Task Setup Agent"]
+  - ["Order Setup Agent", "Constraint Validation Agent"]
+  - ["Order Setup Agent", "Plan Oversight Agent"]
+  - ["Task Setup Agent", "Constraint Validation Agent"]
+  - ["Task Setup Agent", "Plan Oversight Agent"]
+  - ["Constraint Validation Agent", "Plan Oversight Agent"]
+
+# ── Policy P = (P_tran, P_cont) ───────────────────────────────────────────────
+policy:
+  # P_tran: authorized transfer paths (subset of execution_edges)
+  # Only listed (sender → receiver) pairs may forward context.
+  allowed_transfers:
+    "Order Setup Agent":
+      - "Task Setup Agent"
+      - "Constraint Validation Agent"
+      - "Plan Oversight Agent"
+    "Task Setup Agent":
+      - "Constraint Validation Agent"
+      - "Plan Oversight Agent"
+    "Constraint Validation Agent":
+      - "Plan Oversight Agent"
+
+  # P_cont: sensitive keyword set (triggers line-level redaction)
+  sensitive_keywords:
+    - "Audit ID"
+    - "Compliance Key"
+    - "Auditor Signature"
+    - "COMP-KEY"
+    - "SIG-INTERNAL"
+
+  # P_cont: per-receiver keyword allowlist (least privilege)
+  # Receivers not listed here receive no sensitive keywords at all.
+  keyword_permissions:
+    "Constraint Validation Agent":
+      - "Audit ID"
+      - "Compliance Key"
+      - "Auditor Signature"
+      - "COMP-KEY"
+      - "SIG-INTERNAL"
+    "Plan Oversight Agent":
+      - "Audit ID"
+
+  # TLA truth model: keywords each agent may actually emit.
+  # If a sensitive output keyword is missing from sensitive_keywords, TLC can
+  # produce a ContentDataIsolation counterexample and advisor.py can add it.
+  agent_output_keywords:
+    "Order Setup Agent":
+      - "Audit ID"
+      - "Compliance Key"
+      - "Auditor Signature"
+      - "COMP-KEY"
+      - "SIG-INTERNAL"
+
+# ── Output paths ──────────────────────────────────────────────────────────────
+rego_output: "src/policies/generated.rego"
+tla_output_dir: "spec/generated"

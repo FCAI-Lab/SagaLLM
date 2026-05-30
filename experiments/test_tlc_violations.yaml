@@ -1,0 +1,93 @@
+# test_tlc_violations.yaml — TLC 위반 테스트용 pipeline
+# ======================================================
+# preflight는 통과하지만 TLC에서 위반이 발생하도록 설계:
+#
+# [위반 1] DataIsolation
+#   TLA+ 정의:
+#     ∀ src ∈ SensitiveAgents, dst ∈ Agents, kw ∈ AgentOutputKeywords[src]:
+#         kw ∈ promptContext[dst] => <<src, dst>> ∈ P
+#
+#   유발 조건:
+#     - Order Setup Agent(sensitive)가 "Audit ID" 등 keyword를 출력
+#     - execution_edges에는 Order Setup → Task Setup 존재 (E에 있음)
+#     - 그러나 allowed_transfers에서 해당 경로를 제거 (P에 없음)
+#     - TLC: keyword가 Task Setup의 promptContext에 있는데 P에 경로 없음 → 위반
+#
+#   ※ 실제로는 P에 경로가 없으면 OPA가 전송을 막으므로
+#     keyword가 promptContext에 들어갈 수 없음.
+#     이 위반은 P가 E보다 작을 때가 아니라,
+#     P는 있는데 sensitive keyword가 P_cont로 걸러지지 않을 때 발생.
+#     → 아래 설정: P에 경로 있음 + sensitive_keywords에 keyword 없음
+#                  = keyword가 그대로 흘러서 DataIsolation 위반
+#
+# [위반 2] ContentDataIsolation
+#   TLA+ 정의:
+#     ∀ a ∈ Agents, kw ∈ SecretKeywords:
+#         kw ∈ promptContext[a] => kw ∈ KeywordPermissions[a]
+#
+#   유발 조건:
+#     - "Secret Key"가 agent_output_keywords에 있음 (실제 출력됨)
+#     - "Secret Key"가 sensitive_keywords에 없음 (P_cont가 인식 못함)
+#     - → 필터 없이 그대로 흘러서 허용 목록에 없는 receiver에게 도달
+
+agents:
+  - name: "Order Setup Agent"
+    sensitive: true
+  - name: "Task Setup Agent"
+    sensitive: false
+  - name: "Constraint Validation Agent"
+    sensitive: false
+  - name: "Plan Oversight Agent"
+    sensitive: false
+
+execution_edges:
+  - ["Order Setup Agent", "Task Setup Agent"]
+  - ["Order Setup Agent", "Constraint Validation Agent"]
+  - ["Order Setup Agent", "Plan Oversight Agent"]
+  - ["Task Setup Agent", "Constraint Validation Agent"]
+  - ["Task Setup Agent", "Plan Oversight Agent"]
+  - ["Constraint Validation Agent", "Plan Oversight Agent"]
+
+policy:
+  allowed_transfers:
+    "Order Setup Agent":
+      - "Task Setup Agent"          # P_tran 허용 + sensitive_keywords 누락
+      - "Constraint Validation Agent"
+      - "Plan Oversight Agent"
+    "Task Setup Agent":
+      - "Constraint Validation Agent"
+      - "Plan Oversight Agent"
+    "Constraint Validation Agent":
+      - "Plan Oversight Agent"
+
+  # [위반 1][위반 2] 두 키워드 모두 누락
+  #   "Audit ID"   → P_tran 허용 경로로 흘러서 DataIsolation 위반
+  #   "Secret Key" → agent_output_keywords에 있지만 여기 없어서 ContentDataIsolation 위반
+  sensitive_keywords:
+    - "Compliance Key"
+    - "Auditor Signature"
+    - "COMP-KEY"
+    - "SIG-INTERNAL"
+
+  keyword_permissions:
+    "Constraint Validation Agent":
+      - "Compliance Key"
+      - "Auditor Signature"
+      - "COMP-KEY"
+      - "SIG-INTERNAL"
+    "Plan Oversight Agent": []
+
+  # Order Setup Agent의 실제 출력 키워드
+  # "Audit ID"   → sensitive_keywords 누락 → DataIsolation 위반
+  # "Secret Key" → sensitive_keywords 누락 → ContentDataIsolation 위반
+  agent_output_keywords:
+    "Order Setup Agent":
+      - "Audit ID"
+      - "Compliance Key"
+      - "Auditor Signature"
+      - "COMP-KEY"
+      - "SIG-INTERNAL"
+      - "Secret Key"
+
+rego_output: "src/policies/test_tlc.rego"
+tla_output_dir: "spec/test_tlc"

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables (API keys)
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# TLC temporary files
+*.out
+*TTrace*
+*.bin
+spec/**/states/
+states/
+
+# Experiment result JSON files
+experiments/**/results/*.json

@@ -1,0 +1,67 @@
+agents:
+- name: Order Information Agent
+  sensitive: true
+  backstory: You are responsible for handling and storing customer order information,
+    which includes sensitive personal data.
+  task_description: Simulate retrieving customer order information, including customer_name
+    (use placeholder 'NAME-SIM-001') and address (use placeholder 'ADDRESS-SIM-001').
+  task_expected_output: 'A structured summary containing: order_id, customer_name,
+    address, and order_details.'
+- name: Order Processing Agent
+  sensitive: false
+  backstory: You handle the processing of orders based on non-sensitive data.
+  task_description: Process the order using the order_id and order_details, without
+    accessing sensitive customer information.
+  task_expected_output: 'A processing status report containing: order_id and processing_status.'
+- name: Logistics Planning Agent
+  sensitive: false
+  backstory: You plan the logistics for order delivery using non-sensitive data.
+  task_description: Plan the delivery route and schedule based on order_id and processing_status.
+  task_expected_output: 'A logistics plan containing: order_id, delivery_route, and
+    delivery_schedule.'
+- name: Delivery Execution Agent
+  sensitive: false
+  backstory: You execute the delivery of orders based on the logistics plan.
+  task_description: Execute the delivery using the logistics plan, ensuring timely
+    and accurate delivery.
+  task_expected_output: 'A delivery confirmation containing: order_id and delivery_status.'
+execution_edges:
+- - Order Information Agent
+  - Order Processing Agent
+- - Order Processing Agent
+  - Logistics Planning Agent
+- - Logistics Planning Agent
+  - Delivery Execution Agent
+policy:
+  allowed_transfers:
+    Order Information Agent:
+    - Order Processing Agent
+    Order Processing Agent:
+    - Logistics Planning Agent
+    Logistics Planning Agent:
+    - Delivery Execution Agent
+  sensitive_keywords:
+  - customer_name
+  - address
+  keyword_permissions:
+    Order Processing Agent: []
+    Logistics Planning Agent: []
+    Delivery Execution Agent: []
+  agent_output_keywords:
+    Order Information Agent:
+    - customer_name
+    - address
+    - order_id
+    - order_details
+    Order Processing Agent:
+    - order_id
+    - processing_status
+    Logistics Planning Agent:
+    - order_id
+    - delivery_route
+    - delivery_schedule
+    Delivery Execution Agent:
+    - order_id
+    - delivery_status
+rego_output: src/policies/logistics_center_management.rego
+tla_output_dir: spec/logistics_center_management
