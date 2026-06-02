@@ -28,6 +28,23 @@ from typing import Any
 DEFAULT_INPUT_DIR = Path("experiments/agentdojo/safesagallm_scenarios")
 DEFAULT_OUTPUT_DIR = Path("experiments/agentdojo/hf_dataset")
 
+JSON_ENCODED_FIELDS = [
+    "agents",
+    "execution_edges",
+    "dependency_model",
+    "policy",
+    "agentdojo_transfer_events",
+    "agentdojo_inferred_policy_surfaces",
+    "agentdojo_attack",
+    "agentdojo_attack_labels",
+    "agentdojo_attack_sensitive_keywords",
+    "state_delta_labels",
+]
+
+
+def _json_field(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True)
+
 
 def _scenario_row(data: dict[str, Any]) -> dict[str, Any]:
     metadata = data.get("agentdojo_metadata", {})
@@ -50,16 +67,18 @@ def _scenario_row(data: dict[str, Any]) -> dict[str, Any]:
         "agent_count": len(agents),
         "edge_count": len(edges),
         "sensitive_keyword_count": len(sensitive_keywords),
-        "agents": agents,
-        "execution_edges": edges,
-        "dependency_model": data.get("dependency_model", {}),
-        "policy": policy,
-        "agentdojo_transfer_events": data.get("agentdojo_transfer_events", []),
-        "agentdojo_inferred_policy_surfaces": data.get("agentdojo_inferred_policy_surfaces", []),
-        "agentdojo_attack": data.get("agentdojo_attack", {}),
-        "agentdojo_attack_labels": data.get("agentdojo_attack_labels", {}),
-        "agentdojo_attack_sensitive_keywords": data.get("agentdojo_attack_sensitive_keywords", []),
-        "state_delta_labels": data.get("state_delta_labels", {}),
+        # Keep complex, dynamic-key structures JSON-encoded so Hugging Face
+        # `datasets` can infer a stable schema across suites and attack types.
+        "agents": _json_field(agents),
+        "execution_edges": _json_field(edges),
+        "dependency_model": _json_field(data.get("dependency_model", {})),
+        "policy": _json_field(policy),
+        "agentdojo_transfer_events": _json_field(data.get("agentdojo_transfer_events", [])),
+        "agentdojo_inferred_policy_surfaces": _json_field(data.get("agentdojo_inferred_policy_surfaces", [])),
+        "agentdojo_attack": _json_field(data.get("agentdojo_attack", {})),
+        "agentdojo_attack_labels": _json_field(data.get("agentdojo_attack_labels", {})),
+        "agentdojo_attack_sensitive_keywords": _json_field(data.get("agentdojo_attack_sensitive_keywords", [])),
+        "state_delta_labels": _json_field(data.get("state_delta_labels", {})),
         "rego_output": data.get("rego_output"),
         "tla_output_dir": data.get("tla_output_dir"),
     }
@@ -168,6 +187,12 @@ User Task Agent
 `Data Agent` nodes model read-side tool results entering LLM context. `Action
 Agent` nodes model side-effecting tool calls such as sending email, deleting
 files, booking travel, or transferring money.
+
+Complex columns such as `agents`, `policy`, `execution_edges`,
+`agentdojo_attack_labels`, and `state_delta_labels` are stored as JSON-encoded
+strings. This keeps the Hugging Face `datasets` schema stable across suites,
+because these fields contain dynamic agent names and tool-specific argument
+keys.
 
 ## Current Package Summary
 

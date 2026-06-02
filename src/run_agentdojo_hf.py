@@ -31,6 +31,19 @@ LEGACY_FILES = {
     ("workspace", "tool_knowledge"): "data/scenarios.jsonl",
 }
 
+JSON_ENCODED_FIELDS = [
+    "agents",
+    "execution_edges",
+    "dependency_model",
+    "policy",
+    "agentdojo_transfer_events",
+    "agentdojo_inferred_policy_surfaces",
+    "agentdojo_attack",
+    "agentdojo_attack_labels",
+    "agentdojo_attack_sensitive_keywords",
+    "state_delta_labels",
+]
+
 
 def _data_filename(suite: str, attack: str) -> str:
     return LEGACY_FILES.get((suite, attack), f"data/{suite}_{attack}.jsonl")
@@ -64,8 +77,20 @@ def _iter_jsonl(path: Path) -> list[dict[str, Any]]:
     with path.open(encoding="utf-8") as f:
         for line in f:
             if line.strip():
-                rows.append(json.loads(line))
+                rows.append(_decode_row(json.loads(line)))
     return rows
+
+
+def _decode_row(row: dict[str, Any]) -> dict[str, Any]:
+    decoded = dict(row)
+    for field in JSON_ENCODED_FIELDS:
+        value = decoded.get(field)
+        if isinstance(value, str):
+            try:
+                decoded[field] = json.loads(value)
+            except json.JSONDecodeError:
+                pass
+    return decoded
 
 
 def _select_row(

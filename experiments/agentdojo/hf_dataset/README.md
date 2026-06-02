@@ -74,6 +74,12 @@ User Task Agent
 Agent` nodes model side-effecting tool calls such as sending email, deleting
 files, booking travel, or transferring money.
 
+Complex columns such as `agents`, `policy`, `execution_edges`,
+`agentdojo_attack_labels`, and `state_delta_labels` are stored as JSON-encoded
+strings. This keeps the Hugging Face `datasets` schema stable across suites,
+because these fields contain dynamic agent names and tool-specific argument
+keys.
+
 ## Current Package Summary
 
 Total scenarios: 8541
