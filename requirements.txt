@@ -1,0 +1,30 @@
+# ── Core framework ────────────────────────────────────────────────────────────
+openai==2.21.0           # LLM completions (GPT-4o via ReactAgent / PipelinePlanner)
+requests==2.32.5         # OPA REST API client (opa_client.py)
+colorama==0.4.6          # Coloured terminal output
+python-dotenv==1.2.1     # .env loader (OPENAI_API_KEY)
+PyYAML==6.0.3            # pipeline.yaml read/write
+
+# ── Coop Navi dataset ─────────────────────────────────────────────────────────
+numpy==2.4.4             # Coordinate arithmetic in coop_navi_adapter.py
+mpe2==1.1.0              # MPE simple_spread_v3 environment
+pettingzoo==1.26.1       # PettingZoo parallel API (mpe2 dependency)
+
+# ── Visualization (paper figures) ─────────────────────────────────────────────
+matplotlib==3.10.6       # All experiment plots (visualize_scenarios.py, generate_fig*.py)
+
+# ── AgentDojo dataset & benchmark ─────────────────────────────────────────────
+agentdojo==0.1.35        # Task suites / attack scenarios
+huggingface_hub==1.16.1  # HF dataset upload / download (run_agentdojo_hf.py)
+datasets==4.8.5          # HF datasets API (magpie adapter)
+pydantic==2.12.5         # AgentDojo benchmark model validation
+typing_extensions==4.15.0
+
+# ── External binaries (install separately, not via pip) ───────────────────────
+# OPA  — https://www.openpolicyagent.org/docs/latest/#running-opa
+#   brew install opa          (macOS)
+#   scoop install opa         (Windows)
+#   Usage: opa run --server --addr :8181 src/policies/sagallm/trans_cont.rego
+#
+# TLC  — https://github.com/tlaplus/tlaplus/releases
+#   Download tla2tools.jar and set: export TLC_JAR=/path/to/tla2tools.jar

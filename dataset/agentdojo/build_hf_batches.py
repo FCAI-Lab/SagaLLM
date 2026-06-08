@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Build SafeSagaLLM AgentDojo HF batches without writing per-scenario YAML/JSON.
 

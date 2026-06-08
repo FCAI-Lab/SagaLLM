@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Convert AgentDojo result traces into SafeSagaLLM scenario files.
 
