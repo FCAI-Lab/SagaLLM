@@ -57,7 +57,19 @@ def load_and_run(pipeline_path: Path, enforce_opa: bool = True, report: bool = F
             backstory=a.get("backstory", f"You are {name}."),
             task_description=a.get("task_description", "Complete your assigned task."),
             task_expected_output=a.get("task_expected_output", ""),
+            llm=a.get("model", "gpt-4o"),
+            capability=a.get("capability", "general"),
+            clearance=a.get("clearance", "internal"),
             mock_output=a.get("mock_output"),
+        )
+
+    print(Fore.CYAN + f"  agents   : {len(agent_map)}" + Style.RESET_ALL)
+    for agent in agent_map.values():
+        print(
+            Fore.CYAN
+            + f"    - {agent.name} | model={agent.model} | "
+              f"capability={agent.capability} | clearance={agent.clearance}"
+            + Style.RESET_ALL
         )
 
     # ── Wire execution dependencies (>> operator) ──────────────────────────────
@@ -81,6 +93,15 @@ def load_and_run(pipeline_path: Path, enforce_opa: bool = True, report: bool = F
     if report:
         saga.report_transfers()
         saga.report_dependency_vs_transfer()
+
+    # ── Machine-readable exposure summary (parsed by run_experiment.py) ────────
+    # Prints each agent's received context so downstream analysis can check
+    # whether sensitive keywords reached unauthorized agents.
+    import json as _json
+    exposure_data = {}
+    for agent in agents:
+        exposure_data[agent.name] = agent.context or ""
+    print(f"EXPOSURE_JSON:{_json.dumps(exposure_data)}")
 
 
 def main():

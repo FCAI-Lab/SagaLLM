@@ -79,6 +79,28 @@ invariants:
       Rollback chain is incomplete — ensure every agent that reaches "done"
       has a reachable compensation path. Requires manual review.
 
+  ClearanceViolation:
+    opa_fixable: true
+    fix_target: "Rego"
+    action_on_violation: >
+      A sender transferred context to a receiver with lower clearance (No Write Down violated).
+      The (sender, receiver) edge must be removed from allowed_transfers, or the receiver's
+      clearance level in pipeline.yaml must be raised to at least the sender's level.
+    fix_decision:
+      in_E_true:
+        fix_type: p_tran_fix
+      in_E_false:
+        fix_type: p_tran_fix
+      bad_sender_unknown:
+        fix_type: p_tran_fix
+    fixes:
+      p_tran_fix:
+        rego_field: allowed_transfers
+        action: remove_receiver
+        description: >
+          Remove the (sender → receiver) edge from allowed_transfers.
+          No Write Down: a higher-clearance sender must not write to a lower-clearance receiver.
+
   ExecutionOrderPreserved:
     opa_fixable: false
     fix_target: "pipeline.yaml"
@@ -116,6 +138,12 @@ tlc_patterns:
 # ── Rego field metadata ───────────────────────────────────────────────────────
 
 rego_fields:
+  agent_clearance:
+    layer: clearance
+    type: dict_of_string
+    automatable: true
+    description: "Per-agent clearance level (public/internal/confidential/restricted) for Bell-LaPadula No Write Down"
+
   allowed_transfers:
     layer: P_tran
     type: dict_of_sets
@@ -141,6 +169,7 @@ tla_model:
   checked_invariants:
     - DataIsolation
     - ContentDataIsolation
+    - ClearanceViolation
   checked_properties:
     - AtomicTermination
     - CompensationCompleteness

@@ -14,6 +14,7 @@ instruction block that describes available tools in XML format.
 """
 
 import json
+import os
 
 from colorama import Fore
 from dotenv import load_dotenv
@@ -24,6 +25,44 @@ from utils.completions import build_prompt_structure, ChatHistory, completions_c
 from utils.extraction import extract_tag_content
 
 load_dotenv()
+
+
+def _make_client(model: str) -> tuple:
+    """
+    Create the appropriate API client based on model name prefix.
+
+    Supported prefixes:
+      - gpt-*         : OpenAI (default)
+      - claude-*      : Anthropic  (requires ANTHROPIC_API_KEY)
+      - gemini-*      : Google Gemini via OpenAI-compatible endpoint  (requires GEMINI_API_KEY)
+      - deepseek-*    : DeepSeek via OpenAI-compatible endpoint  (requires DEEPSEEK_API_KEY)
+
+    Returns (client, provider_str).
+    """
+    if model.startswith("claude-"):
+        from anthropic import Anthropic
+        return Anthropic(), "anthropic"
+
+    if model.startswith("gemini-"):
+        return (
+            OpenAI(
+                api_key=os.environ.get("GEMINI_API_KEY"),
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            ),
+            "openai",
+        )
+
+    if model.startswith("deepseek-"):
+        return (
+            OpenAI(
+                api_key=os.environ.get("DEEPSEEK_API_KEY"),
+                base_url="https://api.deepseek.com",
+            ),
+            "openai",
+        )
+
+    # Default: OpenAI
+    return OpenAI(), "openai"
 
 BASE_SYSTEM_PROMPT = ""
 
@@ -82,7 +121,7 @@ class ReactAgent:
         model: str = "gpt-4o",
         system_prompt: str = BASE_SYSTEM_PROMPT,
     ) -> None:
-        self.client = OpenAI()
+        self.client, self.provider = _make_client(model)
         self.model = model
         self.system_prompt = system_prompt
         self.tools = tools if isinstance(tools, list) else [tools]
@@ -133,7 +172,7 @@ class ReactAgent:
 
         if self.tools:
             for _ in range(max_rounds):
-                completion = completions_create(self.client, chat_history, self.model)
+                completion = completions_create(self.client, chat_history, self.model, self.provider)
 
                 # If the model emits a final <response>, we're done
                 response = extract_tag_content(str(completion), "response")
@@ -152,4 +191,4 @@ class ReactAgent:
                     update_chat_history(chat_history, f"{observations}", "user")
 
         # No tools (or no <response> found): return raw completion
-        return completions_create(self.client, chat_history, self.model)
+        return completions_create(self.client, chat_history, self.model, self.provider)

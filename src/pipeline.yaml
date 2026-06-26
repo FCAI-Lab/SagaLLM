@@ -5,14 +5,28 @@
 # generates Rego + TLA+ specs, runs TLC, and auto-patches until verified.
 
 # ── Agent definitions ─────────────────────────────────────────────────────────
+# clearance is auto-assigned by advisor.py (load_pipeline → auto_assign_clearance).
+# 3-level lattice: public(0) < internal(1) < restricted(2)
+#   public:     agents handling only public data
+#   internal:   agents handling need-to-know data (PII, account numbers, addresses)
+#   restricted: agents handling auth/financial credentials (password, tokens)
+# No manual clearance: fields needed — advisor.py infers from output keywords + taint propagation.
 agents:
   - name: "Order Setup Agent"
-    sensitive: true          # produces sensitive_data (e.g. audit_id, compliance_key)
+    model: "gpt-4o"
+    capability: "order_setup"
+    sensitive: true
   - name: "Task Setup Agent"
+    model: "gpt-4o"
+    capability: "task_planning"
     sensitive: false
   - name: "Constraint Validation Agent"
+    model: "gpt-4o"
+    capability: "constraint_validation"
     sensitive: false
   - name: "Plan Oversight Agent"
+    model: "gpt-4o"
+    capability: "oversight"
     sensitive: false
 
 # ── Execution graph E (structural dependency edges) ───────────────────────────

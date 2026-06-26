@@ -1,0 +1,45 @@
+# ── SafeSagaLLM Docker Compose ────────────────────────────────────────────────
+# Services:
+#   opa  — OPA policy server on :8181
+#   app  — Python application (connects to opa)
+#
+# Usage:
+#   docker compose up                  # start both services
+#   docker compose run app bash        # interactive shell
+#   docker compose run app python experiments/webarena/run_experiment.py
+
+services:
+
+  # ── OPA Policy Server ─────────────────────────────────────────────────────
+  opa:
+    image: openpolicyagent/opa:0.68.0
+    command:
+      - run
+      - --server
+      - --addr=0.0.0.0:8181
+      - /policies/trans_cont.rego
+    volumes:
+      - ./src/policies/sagallm:/policies:ro
+    ports:
+      - "8181:8181"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8181/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Python Application ────────────────────────────────────────────────────
+  app:
+    build: .
+    env_file:
+      - .env                          # OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.
+    environment:
+      OPA_URL: http://opa:8181        # override localhost → container name
+    volumes:
+      - ./results:/app/results        # persist experiment results on host
+      - ./runs:/app/runs
+    depends_on:
+      opa:
+        condition: service_healthy
+    stdin_open: true
+    tty: true

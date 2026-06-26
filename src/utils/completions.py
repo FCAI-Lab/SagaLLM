@@ -10,8 +10,29 @@ ChatHistory extends list with an optional bounded-window (total_length):
 """
 
 
-def completions_create(client, messages: list, model: str) -> str:
-    """Call the chat completions endpoint and return the response text."""
+def completions_create(client, messages: list, model: str, provider: str = "openai") -> str:
+    """
+    Call the appropriate completions endpoint and return the response text.
+
+    provider:
+      "anthropic" — uses Anthropic Messages API (system prompt extracted separately)
+      "openai"    — uses OpenAI-compatible chat completions API (OpenAI, Gemini, DeepSeek)
+    """
+    if provider == "anthropic":
+        # Anthropic requires system prompt to be passed as a separate parameter,
+        # not inside the messages list.
+        system_parts = [m["content"] for m in messages if m["role"] == "system"]
+        chat_msgs    = [m for m in messages if m["role"] != "system"]
+        response = client.messages.create(
+            model=model,
+            system=system_parts[0] if system_parts else "",
+            messages=chat_msgs,
+            temperature=0.3,
+            max_tokens=3000,
+        )
+        return response.content[0].text
+
+    # OpenAI / OpenAI-compatible (Gemini, DeepSeek)
     response = client.chat.completions.create(
         messages=messages, model=model, temperature=0.3, max_tokens=3000
     )

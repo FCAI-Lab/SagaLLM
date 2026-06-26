@@ -4,6 +4,7 @@ agent.py — Agent Node
 Represents a single agent in the multi-agent Saga pipeline.
 
 Each Agent wraps one ReactAgent (LLM call) and implements:
+  - Agent registry metadata: model, capability, and clearance.
   - Dependency declaration via the >> operator (e.g., agent_a >> agent_b means
     b depends on a and must execute after a).
   - run(): invokes the LLM, then for every declared downstream dependent calls
@@ -32,8 +33,13 @@ class Agent:
         task_expected_output: str = "",
         llm: str = "gpt-4o",
         mock_output: str | None = None,
+        capability: str | list[str] | None = None,
+        clearance: str = "internal",
     ):
         self.name = name
+        self.model = llm
+        self.capability = capability if capability is not None else "general"
+        self.clearance = clearance
         self.backstory = backstory
         self.task_description = task_description
         self.task_expected_output = task_expected_output
